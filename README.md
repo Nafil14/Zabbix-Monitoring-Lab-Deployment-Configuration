@@ -1,33 +1,61 @@
 # Zabbix-Monitoring-Lab-Deployment-Configuration
-📌 Project Overview
-This project demonstrates the successful deployment of a Zabbix 7.0 monitoring solution on an Ubuntu 24.04 server. The goal was to build a functional NOC (Network Operations Center) monitoring core to track system health and performance.
+# Enterprise Monitoring Lab: Zabbix 7.0 on Ubuntu 24.04
 
-🛠️ Tech Stack
-Operating System: Ubuntu 24.04 LTS
+## 🌐 Project Overview
+This project demonstrates the end-to-end deployment of a **Zabbix 7.0** monitoring solution. The lab was built to simulate a Network Operations Center (NOC) environment, providing real-time visibility into server health, database performance, and network availability.
 
-Database: MariaDB (MySQL-compatible)
+## 🗺️ System Architecture
+![NOC Architecture](images/06-architecture-diagram.png)
 
-Web Server: Apache2
+The architecture consists of a Linux-based monitoring core (Ubuntu 24.04) running a MariaDB backend and an Apache2 web frontend, designed to collect data from remote and local hosts.
 
-Monitoring Software: Zabbix 7.0
+## 🛠️ Tech Stack
+* **OS:** Ubuntu 24.04 LTS (Virtualized via VirtualBox)
+* **Monitoring:** Zabbix 7.0 (LTS)
+* **Database:** MariaDB 10.11
+* **Web Server:** Apache2
+* **Language:** PHP 8.3
 
-🚀 Installation & Configuration Highlights
-1. Database Backend
-Initialized a MariaDB database and user with appropriate permissions.
+## 🚀 Deployment Steps
 
-Imported the Zabbix server schema using zcat to create the required table structures.
+### 1. Repository Configuration
+Added official Zabbix 7.0 release repositories to ensure access to the latest LTS features.
+```bash
+wget [https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu24.04_all.deb](https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu24.04_all.deb)
+sudo dpkg -i zabbix-release_7.0-2+ubuntu24.04_all.deb
+sudo apt update
+2. Database Initialization
+Configured MariaDB and created the primary schema for data retention.
 
-2. Troubleshooting (Critical Skill)
-Problem: Encountered ERROR 1050 (42S01): Table 'role' already exists during schema import.
+SQL
+CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+CREATE USER 'zabbix'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';
+3. Schema Import
+Imported the initial server schema. This step verifies the connection between the Linux filesystem and the SQL backend.
 
-Solution: Performed a "Clean Slate" reset by dropping the database and recreating it to ensure no corrupted or duplicate tables existed.
+Bash
+sudo zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mysql --default-character-set=utf8mb4 -uzabbix -p zabbix
+🔧 Troubleshooting: The "Schema Conflict" Fix
+During the deployment, I encountered a critical SQL error:
 
-3. Frontend Setup
-Configured PHP settings including memory_limit, max_execution_time, and timezone synchronization (Asia/Kolkata).
+ERROR 1050 (42S01): Table 'role' already exists
 
-Completed the web-based handshake to connect the Apache frontend to the MariaDB backend.
+Resolution:
+Identified that the schema import had partially completed or overlapped. I performed a "Clean State" reset by dropping the existing database and recreating the environment to ensure zero data corruption.
 
-📈 Monitoring Capabilities
-System Status: Monitoring the Zabbix server's internal health (CPU, RAM, and Disk usage).
+SQL
+DROP DATABASE zabbix;
+CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+-- Re-ran zcat import successfully.
+✅ Final Verification
+Successfully passed all Web Frontend prerequisite checks, confirming optimal PHP configurations for:
 
-Database Health: Real-time tracking of SQL performance and table status.
+Memory Limit & Execution Time
+
+Database Extension Support
+
+Timezone Synchronization (Asia/Kolkata)
+
+📊 Results
+The Zabbix Dashboard is fully operational, monitoring the local server's CPU, RAM, and internal services, providing a "single pane of glass" view for infrastructure health.
